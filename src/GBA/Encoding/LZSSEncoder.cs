@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 
 namespace BinarySerializer.Nintendo.GBA
@@ -109,6 +109,8 @@ namespace BinarySerializer.Nintendo.GBA
             var bufferedBlocks = 0;
             int readBytes = 0;
 
+            int writtenBytes = 0;
+
             while (readBytes < data.Length)
             {
                 #region If 8 blocks are bufferd, write them and reset the buffer
@@ -116,6 +118,7 @@ namespace BinarySerializer.Nintendo.GBA
                 if (bufferedBlocks == 8)
                 {
                     writer.Write(outbuffer, 0, bufferlength);
+                    writtenBytes += bufferlength;
                     // reset the buffer
                     outbuffer[0] = 0;
                     bufferlength = 1;
@@ -154,7 +157,17 @@ namespace BinarySerializer.Nintendo.GBA
 
             // copy the remaining blocks to the output
             if (bufferedBlocks > 0)
+            {
                 writer.Write(outbuffer, 0, bufferlength);
+                writtenBytes += bufferlength;
+            }
+
+            int paddingBytes = (int)(4 - (writtenBytes % 4)) % 4;
+            if (paddingBytes > 0)
+            {
+                byte[] padding = new byte[paddingBytes];
+                writer.Write(padding, 0, paddingBytes);
+            }
         }
 
         private static int GetOccurrenceLength(byte[] data, int newIndex, int newLength, int oldIndex, int oldLength, out int disp, int minDisp = 1)
